@@ -52,6 +52,7 @@ namespace DigiSuperEmuBot
             };
 
             _client.AddModule<RollingModule>("Rolling", ModuleFilter.None);
+            _client.AddModule<RoleModule>("Role Editing", ModuleFilter.None);
 
             _client.ExecuteAndWait(async () =>
             {
