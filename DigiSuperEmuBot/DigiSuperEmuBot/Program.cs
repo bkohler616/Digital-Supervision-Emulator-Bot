@@ -1,27 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using DigiSuperEmuBot.Modules;
+using DigiSuperEmuBot.Modules.Role;
 using DigiSuperEmuBot.Modules.Rolling;
 using Discord;
 using Discord.Commands;
 using Discord.Commands.Permissions.Levels;
 using Discord.Modules;
-using Newtonsoft.Json;
 
 namespace DigiSuperEmuBot
 {
-    class Program
+    internal class Program
     {
-        public static void Main(string[] args) => new Program().Start(args);
-
         private const string AppName = "DiscordExample"; // Change this to the name of your bot
 
         private DiscordClient _client;
+        public static void Main(string[] args) => new Program().Start(args);
 
         private void Start(string[] args)
         {
@@ -31,24 +26,29 @@ namespace DigiSuperEmuBot
                 x.MessageCacheSize = 10;
                 x.EnablePreUpdateEvents = true;
             })
-            .UsingCommands(x =>
-            {
-                x.AllowMentionPrefix = true;
-                x.PrefixChar = '~';
-                x.HelpMode = HelpMode.Public;
-                x.ExecuteHandler += (s, e) => _client.Log.Info("Command", $"[{((e.Server != null) ? e.Server.Name : "Private")}{((!e.Channel.IsPrivate) ? $"/#{e.Channel.Name}" : "")}] <@{e.User.Name}> {e.Command.Text} {((e.Args.Length > 0) ? "| " + string.Join(" ", e.Args) : "")}");
-                x.ErrorHandler = CommandError;
-            })
-            .UsingPermissionLevels((u, c) => (int)GetPermissions(u, c))
-            .UsingModules();
+                .UsingCommands(x =>
+                {
+                    x.AllowMentionPrefix = true;
+                    x.PrefixChar = '~';
+                    x.HelpMode = HelpMode.Public;
+                    x.ExecuteHandler +=
+                        (s, e) =>
+                            _client.Log.Info("Command",
+                                $"[{(e.Server != null ? e.Server.Name : "Private")}{(!e.Channel.IsPrivate ? $"/#{e.Channel.Name}" : "")}] <@{e.User.Name}> {e.Command.Text} {(e.Args.Length > 0 ? "| " + string.Join(" ", e.Args) : "")}");
+                    x.ErrorHandler = CommandError;
+                })
+                .UsingPermissionLevels((u, c) => (int) GetPermissions(u, c))
+                .UsingModules();
 
             _client.Log.Message += (s, e) => WriteLog(e);
             _client.MessageReceived += (s, e) =>
             {
                 if (e.Message.IsAuthor)
-                    _client.Log.Info("<<Message", $"[{((e.Server != null) ? e.Server.Name : "Private")}{((!e.Channel.IsPrivate) ? $"/#{e.Channel.Name}" : "")}] <@{e.User.Name}> {e.Message.Text}");
+                    _client.Log.Info("<<Message",
+                        $"[{(e.Server != null ? e.Server.Name : "Private")}{(!e.Channel.IsPrivate ? $"/#{e.Channel.Name}" : "")}] <@{e.User.Name}> {e.Message.Text}");
                 else
-                    _client.Log.Info(">>Message", $"[{((e.Server != null) ? e.Server.Name : "Private")}{((!e.Channel.IsPrivate) ? $"/#{e.Channel.Name}" : "")}] <@{e.User.Name}> {e.Message.Text}");
+                    _client.Log.Info(">>Message",
+                        $"[{(e.Server != null ? e.Server.Name : "Private")}{(!e.Channel.IsPrivate ? $"/#{e.Channel.Name}" : "")}] <@{e.User.Name}> {e.Message.Text}");
             };
 
             _client.AddModule<RollingModule>("Rolling", ModuleFilter.None);
@@ -106,7 +106,7 @@ namespace DigiSuperEmuBot
                     await e.Channel.SendMessage($"The `{e.Command?.Category}` module is currently disabled.");
                     return;
                 }
-                else if (e.Exception != null)
+                if (e.Exception != null)
                 {
                     await e.Channel.SendMessage(e.Exception.Message);
                     return;
@@ -137,16 +137,27 @@ namespace DigiSuperEmuBot
             ConsoleColor color;
             switch (e.Severity)
             {
-                case LogSeverity.Error: color = ConsoleColor.Red; break;
-                case LogSeverity.Warning: color = ConsoleColor.Yellow; break;
-                case LogSeverity.Info: color = ConsoleColor.White; break;
-                case LogSeverity.Verbose: color = ConsoleColor.Gray; break;
-                case LogSeverity.Debug: default: color = ConsoleColor.DarkGray; break;
+                case LogSeverity.Error:
+                    color = ConsoleColor.Red;
+                    break;
+                case LogSeverity.Warning:
+                    color = ConsoleColor.Yellow;
+                    break;
+                case LogSeverity.Info:
+                    color = ConsoleColor.White;
+                    break;
+                case LogSeverity.Verbose:
+                    color = ConsoleColor.Gray;
+                    break;
+                case LogSeverity.Debug:
+                default:
+                    color = ConsoleColor.DarkGray;
+                    break;
             }
 
             //Exception
             string exMessage;
-            Exception ex = e.Exception;
+            var ex = e.Exception;
             if (ex != null)
             {
                 while (ex is AggregateException && ex.InnerException != null)
@@ -159,7 +170,7 @@ namespace DigiSuperEmuBot
                 exMessage = null;
 
             //Source
-            string sourceName = e.Source?.ToString();
+            var sourceName = e.Source;
 
             //Text
             string text;
@@ -178,7 +189,7 @@ namespace DigiSuperEmuBot
 
 
             //Build message
-            StringBuilder builder = new StringBuilder(text.Length + (sourceName?.Length ?? 0) + (exMessage?.Length ?? 0) + 5);
+            var builder = new StringBuilder(text.Length + (sourceName?.Length ?? 0) + (exMessage?.Length ?? 0) + 5);
             if (sourceName != null)
             {
                 builder.Append('[');
@@ -186,11 +197,11 @@ namespace DigiSuperEmuBot
                 builder.Append("] ");
             }
             builder.Append($"[{DateTime.Now.ToShortDateString()} {DateTime.Now.ToLongTimeString()}] ");
-            for (int i = 0; i < text.Length; i++)
+            for (var i = 0; i < text.Length; i++)
             {
                 //Strip control chars
-                char c = text[i];
-                if (c == '\n' || !char.IsControl(c) || c != (char)8226) // (char)8226 beeps like \a, this catches that
+                var c = text[i];
+                if (c == '\n' || !char.IsControl(c) || c != (char) 8226) // (char)8226 beeps like \a, this catches that
                     builder.Append(c);
             }
             if (exMessage != null)
@@ -206,7 +217,7 @@ namespace DigiSuperEmuBot
                 Console.WriteLine(text);
             }
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine(text);
+            Debug.WriteLine(text);
 #endif
         }
     }

@@ -87,7 +87,8 @@
     <Compile Include="Modules\DiscordModule.cs" />
     <Compile Include="Modules\Reminder\ReminderModule.cs" />
     <Compile Include="Modules\Role\RoleModule.cs" />
-    <Compile Include="Modules\Role\TheOnyxTowerRoles.cs" />
+    <Compile Include="Modules\Rolling\CustomRollData.cs" />
+    <Compile Include="Modules\Rolling\RollingMethods.cs" />
     <Compile Include="Modules\Rolling\RollingModule.cs" />
     <Compile Include="PermissionLevel.cs" />
     <Compile Include="Program.cs" />
